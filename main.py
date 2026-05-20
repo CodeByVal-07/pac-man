@@ -38,8 +38,6 @@ def tile_pos(col, fila, tam_sprite):
     margen = (TILE - tam_sprite) // 2
     return col * TILE + margen, fila * TILE + margen
 
-
-# Tamaño de la ventana según el mapa
 filas = len(matriz_mapa)
 cols = len(matriz_mapa[0])
 ANCHO, ALTO = cols * TILE, filas * TILE
@@ -91,7 +89,9 @@ def nueva_partida():
 nombre_jugador = pedir_nombre()
 intentos = registrar_intento(nombre_jugador)
 pacman, paredes, puntos, powerups, fantasmas, todos = nueva_partida()
+score = 0
 game_over = False
+game_win = False
 
 corriendo = True
 while corriendo:
@@ -119,22 +119,30 @@ while corriendo:
         for f in fantasmas:
             f.update(paredes)
 
-        # Pac-Man come puntos / powerups
-        pygame.sprite.spritecollide(pacman, puntos, True)
-        pygame.sprite.spritecollide(pacman, powerups, True)
+        puntos_comidos = pygame.sprite.spritecollide(pacman, puntos, True)
+        score += len(puntos_comidos)*10
+        powerups_comidos = pygame.sprite.spritecollide(pacman, powerups, True)
+        score += len(powerups_comidos)*50
 
-        # Los fantasmas matan a Pac-Man al tocarlo
+        if len(puntos) == 0 and len(powerups) == 0:
+            game_win = True
+            game_over = True
+
         if pygame.sprite.spritecollideany(pacman, fantasmas):
             game_over = True
 
     pantalla.fill((0, 0, 0))
     todos.draw(pantalla)
     hud = fuente_chica.render(
-        f"Jugador: {nombre_jugador}   Intentos: {intentos}", True, (255, 255, 255)
+        f"Jugador: {nombre_jugador}   Intentos: {intentos}    Score: {score}", True, (255, 255, 255)
     )
     pantalla.blit(hud, (10, 5))
     if game_over:
-        texto = fuente.render("GAME OVER - pulsa R", True, (255, 0, 0))
+        if game_win:
+            texto = fuente.render("¡GANASTE!- pulsa R", True, (0, 255, 0))
+        else:
+            texto = fuente.render("GAME OVER - pulsa R", True, (255, 0, 0))
+
         rect = texto.get_rect(center=(ANCHO // 2, ALTO // 2))
         pantalla.blit(texto, rect)
     pygame.display.flip()
